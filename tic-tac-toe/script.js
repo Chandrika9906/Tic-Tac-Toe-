@@ -4,10 +4,13 @@ const resetButton = document.getElementById("reset");
 const currentPlayerText = document.getElementById("player");
 const scoreXText = document.getElementById("score-x");
 const scoreOText = document.getElementById("score-o");
+const scoreDrawText = document.getElementById("score-draw");
+const statusText = document.getElementById("status");
 
 let currentPlayer = "X";
 let gameState = Array(9).fill("");
-let scoreX = 0, scoreO = 0;
+let gameOver = false;
+let scoreX = 0, scoreO = 0, scoreDraw = 0;
 
 const winningCombinations = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -16,35 +19,44 @@ const winningCombinations = [
 ];
 
 function handleClick(e) {
-    const cellIndex = Array.from(cells).indexOf(e.target);
+    const cell = e.target;
+    const cellIndex = Array.from(cells).indexOf(cell);
 
-    if (gameState[cellIndex] !== "" || checkWin()) return;
+    if (gameState[cellIndex] !== "" || gameOver) return;
 
     gameState[cellIndex] = currentPlayer;
-    e.target.textContent = currentPlayer;
+    cell.textContent = currentPlayer;
+    cell.classList.add("placed");
 
     if (checkWin()) {
         highlightWinningCells();
         updateScore();
-        setTimeout(() => alert(`${currentPlayer} wins!`), 100);
+        setStatus(`🎉 Player ${currentPlayer} wins!`, "win");
+        gameOver = true;
+        document.getElementById("current-player").style.visibility = "hidden";
     } else if (!gameState.includes("")) {
-        setTimeout(() => alert("It's a draw!"), 100);
+        scoreDraw++;
+        scoreDrawText.textContent = scoreDraw;
+        setStatus("🤝 It's a draw!", "draw");
+        gameOver = true;
+        document.getElementById("current-player").style.visibility = "hidden";
     } else {
         currentPlayer = currentPlayer === "X" ? "O" : "X";
         currentPlayerText.textContent = currentPlayer;
+        updateHoverClass();
     }
 }
 
 function checkWin() {
-    return winningCombinations.some(combination => 
-        combination.every(index => gameState[index] === currentPlayer)
+    return winningCombinations.some(combo =>
+        combo.every(i => gameState[i] === currentPlayer)
     );
 }
 
 function highlightWinningCells() {
-    winningCombinations.forEach(combination => {
-        if (combination.every(index => gameState[index] === currentPlayer)) {
-            combination.forEach(index => cells[index].classList.add("winning-cell"));
+    winningCombinations.forEach(combo => {
+        if (combo.every(i => gameState[i] === currentPlayer)) {
+            combo.forEach(i => cells[i].classList.add("winning-cell"));
         }
     });
 }
@@ -59,15 +71,45 @@ function updateScore() {
     }
 }
 
+function setStatus(message, type) {
+    statusText.textContent = message;
+    statusText.className = type;
+}
+
+function updateHoverClass() {
+    document.body.dataset.player = currentPlayer;
+}
+
 function resetGame() {
     gameState.fill("");
     currentPlayer = "X";
+    gameOver = false;
     currentPlayerText.textContent = currentPlayer;
+    document.getElementById("current-player").style.visibility = "visible";
+    statusText.textContent = "\u00a0";
+    statusText.className = "";
     cells.forEach(cell => {
         cell.textContent = "";
-        cell.classList.remove("winning-cell");
+        cell.classList.remove("winning-cell", "placed");
     });
+    updateHoverClass();
 }
 
-cells.forEach(cell => cell.addEventListener("click", handleClick));
+// Hover preview: show current player's symbol on empty cells
+cells.forEach(cell => {
+    cell.addEventListener("click", handleClick);
+
+    cell.addEventListener("mouseenter", () => {
+        const idx = Array.from(cells).indexOf(cell);
+        if (gameState[idx] === "" && !gameOver) {
+            cell.dataset.preview = currentPlayer;
+        }
+    });
+
+    cell.addEventListener("mouseleave", () => {
+        delete cell.dataset.preview;
+    });
+});
+
 resetButton.addEventListener("click", resetGame);
+updateHoverClass();

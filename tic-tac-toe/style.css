@@ -78,10 +78,37 @@ button:hover {
 }
 
 @keyframes flash {
-    from {
-        background: #ffe8a1;
-    }
-    to {
-        background: #fff5d9;
-    }
+    from { background: #ffe8a1; }
+    to   { background: #fff5d9; }
 }
+
+/* Placed animation */
+.cell.placed {
+    animation: pop 0.2s ease;
+}
+
+@keyframes pop {
+    0%   { transform: scale(0.6); }
+    70%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* Hover preview */
+.cell[data-preview]::after {
+    content: attr(data-preview);
+    font-size: 3rem;
+    opacity: 0.25;
+    color: #555;
+    pointer-events: none;
+}
+
+/* Status message */
+#status {
+    font-size: 1.4rem;
+    font-weight: bold;
+    min-height: 2rem;
+    transition: color 0.3s;
+}
+
+#status.win  { color: #ffe066; }
+#status.draw { color: #c8f5ff; }
